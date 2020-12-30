@@ -1,147 +1,107 @@
 package View;
 
-import javax.smartcardio.Card;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 
-public class MainView extends GUIWindow {
+public class MainView extends JFrame {
+    private String[] menuNames = {"File","Add", "Add to...", "Remove", "BorderLayout"};
+    private String[][] menuItems = {{"New", "Save", "Save as...", "Load"},{"JButton", "JRadioButton"},{},{},{}};
 
-    private JButton jbutton;
+    private JMenuBar jMenuBar;
+    private JMenu jMenuRemove;
 
-    private JComboBox jcbSwingComp;
-
-    private JComboBox jcbPositions;
-
-    private JTextField jtfButtonName;
-
-    private JTextField jtfAdd;
-    private JButton jbAdd;
-    private ArrayList<String> listOptions;
-
-    private JPanel jpAddedOptions;
-
-    private JPanel cards;
+    private JPanel GUIPane;
 
 
-    public MainView() throws HeadlessException {
-        listOptions = new ArrayList<String>();
+    public JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
 
+        //Create menu bar from the literal Strings in menuNames
+        for (int i = 0; i < menuNames.length; i++) {
+            switch(menuNames[i]) {
+                //Since remove will be updated we assign it to the private JMenu variable
+                case "Remove":
+                    jMenuRemove = new JMenu("Remove");
+                    jMenuRemove.setEnabled(false);
+
+                    menuBar.add(jMenuRemove);
+                    break;
+                default:
+                    //Create new menu with the name given by the literals
+                    JMenu menu = new JMenu(menuNames[i]);
+
+                    //Fill menu with its items from the literal Strings in menuItems
+                    for (int j = 0; j < menuItems[i].length; j++) {
+                        JMenuItem item = new JMenuItem(menuItems[i][j]);
+                        item.setActionCommand(menuItems[i][j]);
+                        menu.add(item);
+                    }
+
+                    menuBar.add(menu);
+                    break;
+            }
+        }
+        return menuBar;
+    }
+
+    public MainView(String title) throws HeadlessException {
+        //this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setTitle(title);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jMenuBar = createMenuBar();
 
+        this.getContentPane().add(jMenuBar, BorderLayout.PAGE_START);
 
-        jbutton = new JButton("ADD");
-        jcbSwingComp = new JComboBox(getSwingComponents());
-        jcbPositions = new JComboBox(getPositions());
+        GUIPane = new JPanel();
+        GUIPane.setSize(100,100);
+        this.getContentPane().add(this.GUIPane, BorderLayout.CENTER);
 
-        JPanel buttonOptionsCard = new JPanel();
-        buttonOptionsCard.setLayout(new GridLayout(2,1));
-        JPanel jpName = new JPanel();
-        JLabel jlName = new JLabel("Name: ");
-        jtfButtonName = new JTextField(10);
-        jpName.add(jlName);
-        jpName.add(jtfButtonName);
-        /*JPanel jpIcon = new JPanel();
-        JLabel jlIcon = new JLabel("Icon:");
-        JFileChooser jfcIcon = new JFileChooser();
-        jpIcon.add(jlIcon);
-        jpIcon.add(jfcIcon);
-
-        buttonOptionsCard.add(jpIcon);*/
-        buttonOptionsCard.add(jpName);
-
-        JPanel listOptionsCard = new JPanel();
-        listOptionsCard.setLayout(new BoxLayout(listOptionsCard, BoxLayout.Y_AXIS));
-        JPanel jpAddOption = new JPanel();
-        jtfAdd = new JTextField(10);
-        jbAdd = new JButton("Add");
-        jpAddOption.add(jtfAdd);
-        jpAddOption.add(jbAdd);
-        jpAddedOptions = new JPanel();
-        jpAddedOptions.setLayout(new BoxLayout(jpAddedOptions, BoxLayout.Y_AXIS));
-        listOptionsCard.add(jpAddOption);
-        listOptionsCard.add(jpAddedOptions);
-
-        cards = new JPanel(new CardLayout());
-        cards.add(buttonOptionsCard, "1");
-        cards.add(listOptionsCard, "2");
-
-
-
-
-
-        this.getContentPane().setLayout(new BoxLayout(this.getContentPane(), BoxLayout.Y_AXIS));
-
-        this.getContentPane().add(jcbSwingComp);
-        this.getContentPane().add(jcbPositions);
-
-        CardLayout cl = (CardLayout) cards.getLayout();
-        cl.show(cards,"1");
-
-        this.add(cards);
-
-        this.getContentPane().add(jbutton);
-
+        this.setLocationRelativeTo(null);
         this.pack();
         this.setVisible(true);
     }
 
-    public JButton getJbutton() {
-        return jbutton;
+
+    public JMenuBar getjMenuBar() {
+        return this.jMenuBar;
     }
 
-    public String getSelectedComponent () {
-        return (String) jcbSwingComp.getSelectedItem();
+    public void addGUI(Component component, Object constraints) {
+        GUIPane.add(component, constraints);
+        this.revalidate();
+        this.pack();
     }
 
-    public String getSelectedPosition () {
-        return (String) jcbPositions.getSelectedItem();
+    public JMenu getjMenuRemove() {
+        return jMenuRemove;
     }
 
-    public JComboBox getJcbSwingComp() {
-        return jcbSwingComp;
-    }
+    public void updateRemoveMenu(ArrayList<String> addedItems) {
+        jMenuRemove.removeAll();
 
-    public JComboBox getJcbPositions() {
-        return jcbPositions;
-    }
+        if (addedItems.size() > 0) {
+            jMenuRemove.setEnabled(true);
+            //Fill menu with its items from the literal Strings in menuItems
+            for (int j = 0; j < addedItems.size(); j++) {
+                JMenuItem item = new JMenuItem(addedItems.get(j));
+                //For removing elements the action command format is Remove::<Name>
+                item.setActionCommand("Remove"+"::"+addedItems.get(j));
+                jMenuRemove.add(item);
+            }
 
-    public String getJtfButtonName() {
-        return jtfButtonName.getText();
-    }
+            jMenuRemove.revalidate();
 
-    public void updateViewComponentType() {
-        CardLayout cl = (CardLayout) cards.getLayout();
-        switch ((String)jcbSwingComp.getSelectedItem()) {
-            case "JButton":
-                cl.show(cards,"1");
-                break;
-            default:
-                cl.show(cards,"2");
-                jpAddedOptions.removeAll();
-                listOptions.clear();
-                break;
+        } else {
+            //If there are no added components we should diable the menu
+            jMenuRemove.setEnabled(false);
         }
     }
 
-    public String getJtfAddText() {
-        return jtfAdd.getText();
-    }
-
-    public JButton getJbAdd() {
-        return jbAdd;
-    }
-
-    public void addToOptionList(String s) {
-        listOptions.add(s);
-        jpAddedOptions.add(new JLabel(s));
-        System.out.println(listOptions);
+    public void discard (Component comp) {
+        GUIPane.remove(comp);
+        GUIPane.revalidate();
+        GUIPane.repaint();
         this.pack();
-        this.revalidate();
-    }
-
-    public ArrayList<String> getListOptions() {
-        return listOptions;
     }
 }
